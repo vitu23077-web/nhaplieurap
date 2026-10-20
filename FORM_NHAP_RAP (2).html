@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nhập liệu rập</title>
+<style>
+  :root { --bg:#f4f6f9; --card:#fff; --text:#1d2330; --muted:#6b7385; --line:#d8dde6;
+          --primary:#1f4e78; --ok:#2e7d32; --bad:#c62828; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg:#15181f; --card:#1f2430; --text:#e7eaf0; --muted:#9aa3b5; --line:#343b4a; --primary:#4f8fc9; }
+  }
+  :root[data-theme="dark"] { --bg:#15181f; --card:#1f2430; --text:#e7eaf0; --muted:#9aa3b5; --line:#343b4a; --primary:#4f8fc9; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); }
+  header { background:var(--primary); color:#fff; padding:14px 20px; }
+  header h1 { margin:0; font-size:18px; }
+  main { max-width:900px; margin:0 auto; padding:16px; display:grid; gap:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; }
+  .tabs { display:flex; gap:8px; }
+  .tab { flex:1; padding:10px; border:1px solid var(--line); background:var(--card); color:var(--text); border-radius:8px; cursor:pointer; font-weight:600; }
+  .tab.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
+  label { display:grid; gap:4px; font-size:13px; color:var(--muted); }
+  input, select, textarea { font:inherit; font-size:15px; color:var(--text); background:var(--card); border:1px solid var(--line); border-radius:6px; padding:8px 10px; width:100%; }
+  textarea { resize:vertical; min-height:38px; }
+  .radios { display:flex; gap:10px; }
+  .radios label { flex:1; display:flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:8px; padding:10px; color:var(--text); font-size:15px; cursor:pointer; }
+  .radios input { width:auto; }
+  .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; align-items:center; }
+  button { font:inherit; padding:10px 16px; border-radius:8px; border:1px solid var(--primary); background:var(--primary); color:#fff; cursor:pointer; font-weight:600; }
+  button.secondary { background:var(--card); color:var(--primary); }
+  button.danger { background:var(--card); color:var(--bad); border-color:var(--bad); padding:4px 10px; font-size:13px; }
+  .msg { margin-top:10px; font-size:14px; min-height:20px; }
+  .msg.err { color:var(--bad); } .msg.ok { color:var(--ok); }
+  .info { font-size:13px; color:var(--muted); margin-top:6px; }
+  .hidden { display:none !important; }
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { text-align:left; padding:8px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  th { color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; }
+  .tag { padding:2px 8px; border-radius:10px; font-size:12px; font-weight:600; background:#e3f0fb; color:#1f4e78; }
+  .tag.dat { background:#e6f4ea; color:var(--ok); }
+  .tag.khongdat { background:#fdecea; color:var(--bad); }
+  .muted { color:var(--muted); font-size:13px; }
+  @media (max-width:600px) { .radios { flex-direction:column; } }
+</style>
+</head>
+<body>
+<header><h1>Nhập liệu rập</h1></header>
+<main>
+
+  <section class="card">
+    <div class="tabs">
+      <button class="tab active" data-mode="NHẬN" type="button">Nhận rập</button>
+      <button class="tab" data-mode="TRẢ" type="button">Trả rập</button>
+    </div>
+
+    <!-- FORM NHẬN -->
+    <form id="formNhan" novalidate style="margin-top:14px">
+      <div class="grid">
+        <label>Ngày nhận <input type="date" name="ngay" required></label>
+        <label>Style (nhập tự do) <input type="text" name="style" maxlength="40" required placeholder="VD: HV8334"></label>
+        <label>Công đoạn <input type="text" name="congdoan" maxlength="80" required placeholder="VD: CHÍT TAY TRÁI PHẢI"></label>
+        <label>Line <input type="text" name="line" maxlength="20" required placeholder="VD: RT, 52, 45"></label>
+        <label>Số lượng nhận <input type="number" name="sl" min="1" step="1" inputmode="numeric" required></label>
+        <label style="grid-column:1/-1">Ghi chú <textarea name="ghichu" maxlength="200"></textarea></label>
+      </div>
+      <div class="actions"><button type="submit">Lưu lần nhận</button></div>
+      <div class="msg" id="msgNhan"></div>
+    </form>
+
+    <!-- FORM TRẢ -->
+    <form id="formTra" class="hidden" novalidate style="margin-top:14px">
+      <div class="grid">
+        <label>Ngày trả <input type="date" name="ngay" required></label>
+        <label>Lô rập trả (đang ở line)
+          <select name="lo" required></select>
+        </label>
+        <label>Số lượng trả <input type="number" name="sl" min="1" step="1" inputmode="numeric" required></label>
+        <div style="grid-column:1/-1">
+          <div class="muted" style="margin-bottom:6px">Tình trạng trả</div>
+          <div class="radios">
+            <label><input type="radio" name="tinhtrang" value="Đạt" checked> Đạt (trả lại được)</label>
+            <label><input type="radio" name="tinhtrang" value="Không đạt"> Không đạt (hư, bỏ)</label>
+          </div>
+        </div>
+        <label style="grid-column:1/-1">Ghi chú <textarea name="ghichu" maxlength="200"></textarea></label>
+      </div>
+      <div class="info" id="loInfo"></div>
+      <div class="actions"><button type="submit">Lưu lần trả</button></div>
+      <div class="msg" id="msgTra"></div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="actions" style="margin-top:0;justify-content:space-between">
+      <strong>Đã nhập: <span id="countAll">0</span> dòng, chưa xuất: <span id="countNew">0</span></strong>
+      <button type="button" id="btnExport">Xuất CSV (dòng chưa xuất)</button>
+    </div>
+    <div class="msg" id="msgList"></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Loại</th><th>Ngày</th><th>Style</th><th>Công đoạn</th><th>Line</th><th>SL</th><th>Tình trạng</th><th>Ghi chú</th><th>Xuất</th><th></th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="muted" style="margin-top:10px">Dữ liệu chỉ lưu trên trình duyệt của máy này. Cuối ca bấm <b>Xuất CSV</b> và mở file đó trong Excel.</div>
+  </section>
+</main>
+
+<script>
+(function () {
+  const KEY = "rap_records_v2";
+  const HEAD = ["Loại","Ngày","Style","Công đoạn","Line","Số lượng","Tình trạng","Ghi chú"];
+
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const today = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+  const norm = s => String(s || "").trim().replace(/\s+/g, " ").toUpperCase();
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+  function load() { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) { return []; } }
+  function save(list) { try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) { alert("Không lưu được trên máy này: " + e.message); } }
+  const newId = () => Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+
+  // Lô = style | công đoạn | line
+  const keyOf = r => [norm(r.style), norm(r.congdoan), norm(r.line)].join("|");
+
+  // Lô còn rập ở line = tổng nhận − tổng trả (đạt + không đạt)
+  function openBatches(list) {
+    const acc = {};
+    list.forEach(r => {
+      const k = keyOf(r);
+      acc[k] = acc[k] || { style: r.style.trim(), congdoan: r.congdoan.trim(), line: r.line.trim(), left: 0 };
+      acc[k].left += r.loai === "NHẬN" ? Number(r.sl) : -Number(r.sl);
+    });
+    return Object.entries(acc).filter(([, v]) => v.left > 0).map(([k, v]) => Object.assign({ key: k }, v));
+  }
+
+  let mode = "NHẬN";
+  function setMode(m) {
+    mode = m;
+    $$(".tab").forEach(b => b.classList.toggle("active", b.dataset.mode === m));
+    $("#formNhan").classList.toggle("hidden", m !== "NHẬN");
+    $("#formTra").classList.toggle("hidden", m !== "TRẢ");
+    if (m === "TRẢ") refreshLo();
+  }
+
+  function refreshLo() {
+    const sel = $("#formTra select[name=lo]");
+    const prev = sel.value;
+    const batches = openBatches(load());
+    sel.innerHTML = '<option value="">-- chọn lô --</option>' + batches.map(b =>
+      `<option value="${esc(b.key)}" data-left="${b.left}">${esc(b.style)} | ${esc(b.congdoan)} | Line ${esc(b.line)} | còn ${b.left}</option>`).join("");
+    if (batches.some(b => b.key === prev)) sel.value = prev;
+    $("#loInfo").textContent = batches.length ? "" : "Chưa có rập nào đang ở line.";
+    updateLoInfo();
+  }
+
+  function updateLoInfo() {
+    const opt = $("#formTra select[name=lo]").selectedOptions[0];
+    const f = $("#formTra");
+    if (opt && opt.dataset.left) f.sl.max = opt.dataset.left; else f.sl.removeAttribute("max");
+  }
+
+  function msg(el, text, ok) { el.textContent = text; el.className = "msg " + (ok ? "ok" : "err"); }
+
+  $$(".tab").forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
+  $("#formTra select[name=lo]").addEventListener("change", updateLoInfo);
+
+  $("#formNhan").addEventListener("submit", e => {
+    e.preventDefault();
+    const f = e.target, m = $("#msgNhan");
+    const sl = Number(f.sl.value);
+    if (!f.ngay.value || !f.style.value.trim() || !f.congdoan.value.trim() || !f.line.value.trim())
+      return msg(m, "Thiếu thông tin: ngày, style, công đoạn, line.", false);
+    if (!Number.isInteger(sl) || sl <= 0) return msg(m, "Số lượng nhận phải là số nguyên dương.", false);
+    const rec = { id: newId(), loai: "NHẬN", ngay: f.ngay.value, style: f.style.value.trim(),
+      congdoan: f.congdoan.value.trim(), line: f.line.value.trim(), sl, tinhtrang: "",
+      ghichu: f.ghichu.value.trim(), xuat: false };
+    const list = load(); list.push(rec); save(list);
+    f.style.value = ""; f.congdoan.value = ""; f.line.value = ""; f.sl.value = ""; f.ghichu.value = "";
+    msg(m, "Đã lưu: nhận " + rec.sl + " " + rec.style + " – " + rec.line, true);
+    f.style.focus();
+    renderList();
+  });
+
+  $("#formTra").addEventListener("submit", e => {
+    e.preventDefault();
+    const f = e.target, m = $("#msgTra");
+    const sl = Number(f.sl.value);
+    if (!f.lo.value) return msg(m, "Chọn lô rập trả.", false);
+    if (!f.ngay.value) return msg(m, "Thiếu ngày trả.", false);
+    if (!Number.isInteger(sl) || sl <= 0) return msg(m, "Số lượng trả phải là số nguyên dương.", false);
+    const b = openBatches(load()).find(x => x.key === f.lo.value);
+    if (!b) return msg(m, "Lô này không còn ở line, vui lòng chọn lại.", false);
+    if (sl > b.left) return msg(m, `Số lượng trả vượt quá số còn ở line (${b.left}).`, false);
+    const tinhtrang = f.tinhtrang.value;
+    const rec = { id: newId(), loai: "TRẢ", ngay: f.ngay.value, style: b.style, congdoan: b.congdoan, line: b.line,
+      sl, tinhtrang, ghichu: f.ghichu.value.trim(), xuat: false };
+    const list = load(); list.push(rec); save(list);
+    f.sl.value = ""; f.ghichu.value = "";
+    msg(m, `Đã lưu trả ${sl} (${tinhtrang}) – ${b.style}`, true);
+    refreshLo();
+    renderList();
+  });
+
+  function renderList() {
+    const list = load();
+    $("#countAll").textContent = list.length;
+    $("#countNew").textContent = list.filter(r => !r.xuat).length;
+    const rows = list.slice().reverse().slice(0, 200).map(r => `<tr>
+      <td><span class="tag">${r.loai}</span></td>
+      <td>${esc(r.ngay)}</td><td>${esc(r.style)}</td><td>${esc(r.congdoan)}</td><td>${esc(r.line)}</td>
+      <td>${r.sl}</td>
+      <td>${r.tinhtrang ? `<span class="tag ${r.tinhtrang === "Đạt" ? "dat" : "khongdat"}">${esc(r.tinhtrang)}</span>` : ""}</td>
+      <td>${esc(r.ghichu)}</td>
+      <td>${r.xuat ? "Đã xuất" : "Chưa"}</td>
+      <td>${r.xuat ? "" : `<button class="danger" data-del="${r.id}">Xóa</button>`}</td></tr>`).join("");
+    $("#tbody").innerHTML = rows || `<tr><td colspan="10" class="muted">Chưa có dòng nào.</td></tr>`;
+  }
+
+  $("#tbody").addEventListener("click", e => {
+    const id = e.target.dataset.del;
+    if (!id || !confirm("Xóa dòng này?")) return;
+    save(load().filter(r => r.id !== id));
+    renderList(); if (mode === "TRẢ") refreshLo();
+  });
+
+  // ---- CSV ----
+  function csvCell(v) { const s = String(v ?? ""); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+
+  $("#btnExport").addEventListener("click", () => {
+    const list = load();
+    const pending = list.filter(r => !r.xuat);
+    if (!pending.length) return msg($("#msgList"), "Không có dòng mới để xuất.", false);
+    const lines = [HEAD.join(",")].concat(pending.map(r =>
+      [r.loai, r.ngay, r.style, r.congdoan, r.line, r.sl, r.tinhtrang, r.ghichu].map(csvCell).join(",")));
+    const blob = new Blob(["﻿" + lines.join("\r\n") + "\r\n"], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `rap_${today()}_${Date.now().toString().slice(-5)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    const ids = new Set(pending.map(r => r.id));
+    save(list.map(r => ids.has(r.id) ? Object.assign({}, r, { xuat: true }) : r));
+    msg($("#msgList"), `Đã xuất ${pending.length} dòng.`, true);
+    renderList();
+  });
+
+  $("#formNhan").ngay.value = today();
+  $("#formTra").ngay.value = today();
+  setMode("NHẬN");
+  renderList();
+})();
+</script>
+</body>
+</html>
